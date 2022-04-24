@@ -1,9 +1,8 @@
 const { Client, Intents } = require('discord.js');
 const { prefix, token } = require("./config.json");
 /* const ytdl = require("ytdl-core"); */
-/* const { video_basic_info, stream} = require('play-dl'); */
 
-const play = require('play-dl'); // Everything
+const play = require('play-dl');
 const ytpl = require('ytpl');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require("@discordjs/voice");
 
@@ -36,16 +35,16 @@ client.on("messageCreate", async message => {
     return;
   }
 	else if (message.content.startsWith(`${prefix}hello`)) {
-    message.channel.send("Привет! Меня зовут Ori. Я музыкальный бот и могу воспроизводить треки из YouTube по url. Вот список команд:\n1) !time - локальное время\n2) !info - небольшая информация о моём создателе\n3) !playMusic - воспроизведение музыки из YouTube\n4) !skip - переход к следующему треку из очереди\n5) !pause - приостановка песен из очереди\n5) !resume - возобновление песен из очереди\n6) !stop - очистка очереди и остановка воспризведения песен\n7) !hello - вновь увидеть эту надпись\n <^-^>");
+    message.channel.send("*Привет! Меня зовут Ori. Я музыкальный бот и могу воспроизводить треки из YouTube по url. Вот список команд:*\n1) **!time** - *локальное время*\n2) **!info** - *небольшая информация о моём создателе*\n3) **!play** - *воспроизведение музыки из YouTube*\n4) **!skip** - *переход к следующему треку из очереди*\n5) **!pause** - *приостановка песен из очереди*\n5) **!resume** - *возобновление песен из очереди*\n6) **!stop** - *очистка очереди и остановка воспризведения песен*\n7) **!hello** - *вновь увидеть эту надпись*\n8) **!list** - *добавить в очередь плейлист из YouTube*\n9) **!tracklist** - *показать список треков в очереди*\n10) **!random** - *перемешать очередь треков*\n *<^-^>*");
     return;
   }
 	else if (message.content.startsWith(`${prefix}info`)) {
-    message.channel.send("Моего создателя зовут Туровский Иван, студент Брянского ГТУ группы O-20-ИВТ2-по-Б. А я - всего лишь жалкая курсовая работа, написанная им на языке программирования JavaSript.");
+    message.channel.send("*Моего создателя зовут Туровский Иван, студент Брянского ГТУ группы O-20-ИВТ2-по-Б. А я - всего лишь жалкая курсовая работа, написанная им на языке программирования JavaSript.*");
     return;
   }
 	else if (message.content.startsWith(`${prefix}time`)) {
     const date = new Date().toLocaleString();
-		message.channel.send(`Текущее время: ${date}`);
+		message.channel.send(`*Текущее время: ${date}*`);
     return;
   } else if (message.content.startsWith(`${prefix}stop`)) {
     stop(message, serverQueue);
@@ -71,7 +70,7 @@ client.on("messageCreate", async message => {
     randomTrack(message, serverQueue);
     return;
   } else {
-    message.channel.send("Вам нужно ввести правильную команду!");
+    message.channel.send("*Вам нужно ввести правильную команду! :(*");
   }
 });
 // -------------------------------------------------
@@ -81,19 +80,19 @@ async function execute(message, serverQueue) {
   const voiceChannel = message.member.voice.channel;
   if (!voiceChannel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале для воспроизведения музыки!"
+      "*Вы должны быть в голосовом канале, чтобы я смогла воспроизвести музыку! :(*"
     );
   const permissions = voiceChannel.permissionsFor(message.client.user);
   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
     return message.channel.send(
-      "Мне нужны разрешения, чтобы присоединиться и говорить в вашем голосовом канале!"
+      "*Мне нужны разрешения, чтобы присоединиться и говорить в вашем голосовом канале! :(*"
     );
   }
 	let songInfo;
 	try{
   	songInfo = await play.video_basic_info(args[1]);
 	}catch{
-		return message.channel.send("Введён некорректный url");
+		return message.channel.send("*Введён некорректный url! :(*");
 	};
 
 	const song = {
@@ -131,7 +130,7 @@ async function execute(message, serverQueue) {
     }
   } else {
     serverQueue.songs.push(song);
-    return message.channel.send(`**${song.title}** был добавлен в очередь!`);
+    return message.channel.send(`**${song.title}** *был добавлен в очередь!*`);
   }
 }
 
@@ -141,12 +140,12 @@ async function playlist(message, serverQueue) {
   const voiceChannel = message.member.voice.channel;
   if (!voiceChannel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале для воспроизведения музыки!"
+      "*Вы должны быть в голосовом канале, чтобы я смогла воспроизвести музыку! :(*"
     );
   const permissions = voiceChannel.permissionsFor(message.client.user);
   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
     return message.channel.send(
-      "Мне нужны разрешения, чтобы присоединиться и говорить в вашем голосовом канале!"
+      "*Мне нужны разрешения, чтобы присоединиться и говорить в вашем голосовом канале! :(*"
     );
   }
 	if (!serverQueue) {
@@ -181,7 +180,7 @@ async function playlist(message, serverQueue) {
 		}catch (err) {
       console.log(err);
       queue.delete(message.guild.id);
-      return message.channel.send("Неверный url плейлиста");
+      return message.channel.send("*Неверный url плейлиста :(*");
     }
     playMusic(message.guild, queueContruct.songs[0]);
 	} else {
@@ -193,36 +192,36 @@ async function playlist(message, serverQueue) {
   		};
 			serverQueue.songs.push(song);
 		})
-    message.channel.send("Весь плейлист добавлен в очередь!");
+    message.channel.send("*Весь плейлист добавлен в очередь!*");
   }
 }
 
 function tracklist(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале, чтобы просмотреть список треков!"
+      "*Вы должны быть в голосовом канале, чтобы я показала Вам список треков! :(*"
     );
   if (!serverQueue)
-    return message.channel.send("Треклист пуст!");
+    return message.channel.send("*Треклист пуст! :<*");
   /* console.log(serverQueue); */
   let titleMessage = '';
   for (let i = 0; i < serverQueue.songs.length - 1; i++){
-    if (i <= 15) titleMessage += `${i + 1}  -  ${serverQueue.songs[i].title}\n↓\n`;
+    if (i <= 15) titleMessage += `*${i + 1}  -  ${serverQueue.songs[i].title}*\n`;
     else{
       titleMessage += '\n↓\n...';
       break
     };
   }
-  message.channel.send(titleMessage);
+  if (titleMessage) message.channel.send(titleMessage);
 }
 
 function randomTrack(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале, чтобы запустить случайный трек!"
+      "*Вы должны быть в голосовом канале, чтобы я запустила случайный трек! :(*"
     );
   if (!serverQueue)
-    return message.channel.send("Треклист пуст!");
+    return message.channel.send("*Треклист пуст! :<*");
   pause(message, serverQueue);
   connection = joinVoiceChannel({
     channelId: message.member.voice.channel.id,
@@ -238,20 +237,20 @@ function randomTrack(message, serverQueue) {
 function pause(message, serverQueue) {
 	if (!message.member.voice.channel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале, чтобы поставить музыку на паузу!"
+      "*Вы должны быть в голосовом канале, чтобы я поставила музыку на паузу! :(*"
     );
   if (!serverQueue)
-    return message.channel.send("Нет песни, которую я мог бы поставить на паузу!");
+    return message.channel.send("*Нет песни, которую я смогла бы поставить на паузу! :(*");
 	serverQueue.connection.disconnect();
 }
 
 function resume(message, serverQueue) {
 	if (!message.member.voice.channel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале, чтобы я мог воспроизвести музыку!"
+      "*Вы должны быть в голосовом канале, чтобы я смогла воспроизвести музыку! :(*"
     );
   if (!serverQueue){
-    return message.channel.send("Нет песни, которую я мог бы воспроизвести!");
+    return message.channel.send("*Нет песни, которую я смогла бы воспроизвести! :(*");
 	}
 	connection = joinVoiceChannel({
     channelId: message.member.voice.channel.id,
@@ -266,10 +265,12 @@ function resume(message, serverQueue) {
 function skip(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале, чтобы остановить музыку!"
+      "*Вы должны быть в голосовом канале, чтобы я остановила музыку! :(*"
     );
   if (!serverQueue)
-    return message.channel.send("Нет песни, которую я мог бы пропустить!");
+    return message.channel.send("*Нет песни, которую я могла бы пропустить! :(*");
+    if (serverQueue.songs.length > 1) message.channel.send("*Начинаю транслировать следующую песню!*");
+    else message.channel.send("*Песни подошли к концу*");
   serverQueue.songs.shift();
 	playMusic(message.guild, serverQueue.songs[0]);
 }
@@ -277,13 +278,14 @@ function skip(message, serverQueue) {
 function stop(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-      "Вы должны быть в голосовом канале, чтобы остановить музыку!"
+      "*Вы должны быть в голосовом канале, чтобы я остановила музыку! :(*"
     );
     
   if (!serverQueue)
-    return message.channel.send("Нет песни, которую я мог бы остановить!");
+    return message.channel.send("*Нет песни, которую я могла бы остановить! :(*");
     
   serverQueue.songs = [];
+  message.channel.send("*Я очистила очередь треков!*");
 	playMusic(message.guild, serverQueue.songs[0]);
 }
 
@@ -318,7 +320,7 @@ async function playMusic(guild, song) {
   /* const dispatcher = serverQueue.connection.playMusic(stream).on("finish", () => {
   }).on("error", error => console.error(error)); */
   /* dispatcher.setVolumeLogarithmic(serverQueue.volume / 5); */
-  serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+  serverQueue.textChannel.send(`*Start playing:* **${song.title}**`);
 }
 
 client.login(token);
