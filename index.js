@@ -66,6 +66,10 @@ client.on("messageCreate", async message => {
   else if (message.content.startsWith(`${prefix}tracklist`)) {
     tracklist(message, serverQueue);
     return;
+  }
+  else if (message.content.startsWith(`${prefix}random`)) {
+    randomTrack(message, serverQueue);
+    return;
   } else {
     message.channel.send("Вам нужно ввести правильную команду!");
   }
@@ -202,7 +206,7 @@ function tracklist(message, serverQueue) {
     return message.channel.send("Треклист пуст!");
   /* console.log(serverQueue); */
   let titleMessage = '';
-  for (let i = 0; i < serverQueue.songs.length; i++){
+  for (let i = 0; i < serverQueue.songs.length - 1; i++){
     if (i <= 15) titleMessage += `${i + 1}  -  ${serverQueue.songs[i].title}\n↓\n`;
     else{
       titleMessage += '\n↓\n...';
@@ -210,6 +214,25 @@ function tracklist(message, serverQueue) {
     };
   }
   message.channel.send(titleMessage);
+}
+
+function randomTrack(message, serverQueue) {
+  if (!message.member.voice.channel)
+    return message.channel.send(
+      "Вы должны быть в голосовом канале, чтобы запустить случайный трек!"
+    );
+  if (!serverQueue)
+    return message.channel.send("Треклист пуст!");
+  pause(message, serverQueue);
+  connection = joinVoiceChannel({
+    channelId: message.member.voice.channel.id,
+    guildId: message.guild.id,
+    adapterCreator: message.guild.voiceAdapterCreator,
+		selfDeaf: false,
+    selfMute: false
+	});
+  serverQueue.songs.sort(()=>Math.random()-0.5);
+  playMusic(message.guild, serverQueue.songs[0]);
 }
 
 function pause(message, serverQueue) {
