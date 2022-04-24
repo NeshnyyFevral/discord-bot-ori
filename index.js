@@ -1,6 +1,9 @@
 const { Client, Intents } = require('discord.js');
 const { prefix, token } = require("./config.json");
-const ytdl = require("ytdl-core");
+/* const ytdl = require("ytdl-core"); */
+/* const { video_basic_info, stream} = require('play-dl'); */
+
+const play = require('play-dl'); // Everything
 const ytpl = require('ytpl');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require("@discordjs/voice");
 
@@ -33,7 +36,7 @@ client.on("messageCreate", async message => {
     return;
   }
 	else if (message.content.startsWith(`${prefix}hello`)) {
-    message.channel.send("Привет! Меня зовут Ori. Я музыкальный бот и могу воспроизводить треки из YouTube по url. Вот список команд:\n1) !time - локальное время\n2) !info - небольшая информация о моём создателе\n3) !play - воспроизведение музыки из YouTube\n4) !skip - переход к следующему треку из очереди\n5) !pause - приостановка песен из очереди\n5) !resume - возобновление песен из очереди\n6) !stop - очистка очереди и остановка воспризведения песен\n7) !hello - вновь увидеть эту надпись\n <^-^>");
+    message.channel.send("Привет! Меня зовут Ori. Я музыкальный бот и могу воспроизводить треки из YouTube по url. Вот список команд:\n1) !time - локальное время\n2) !info - небольшая информация о моём создателе\n3) !playMusic - воспроизведение музыки из YouTube\n4) !skip - переход к следующему треку из очереди\n5) !pause - приостановка песен из очереди\n5) !resume - возобновление песен из очереди\n6) !stop - очистка очереди и остановка воспризведения песен\n7) !hello - вновь увидеть эту надпись\n <^-^>");
     return;
   }
 	else if (message.content.startsWith(`${prefix}info`)) {
@@ -59,6 +62,10 @@ client.on("messageCreate", async message => {
 	else if (message.content.startsWith(`${prefix}list`)) {
     playlist(message, serverQueue);
     return;
+  }
+  else if (message.content.startsWith(`${prefix}tracklist`)) {
+    tracklist(message, serverQueue);
+    return;
   } else {
     message.channel.send("Вам нужно ввести правильную команду!");
   }
@@ -80,14 +87,14 @@ async function execute(message, serverQueue) {
   }
 	let songInfo;
 	try{
-  	songInfo = await ytdl.getInfo(args[1]);
+  	songInfo = await play.video_basic_info(args[1]);
 	}catch{
 		return message.channel.send("Введён некорректный url");
 	};
 
 	const song = {
-  	  title: songInfo.videoDetails.title,
-  	  url: songInfo.videoDetails.video_url,
+  	  title: songInfo.video_details.title,
+  	  url: songInfo.video_details.url,
   };
 
   if (!serverQueue) {
@@ -112,7 +119,7 @@ async function execute(message, serverQueue) {
     		selfMute: false
 			});
       queueContruct.connection = connection;
-      play(message.guild, queueContruct.songs[0]);
+      playMusic(message.guild, queueContruct.songs[0]);
     } catch (err) {
       console.log(err);
       queue.delete(message.guild.id);
@@ -120,7 +127,7 @@ async function execute(message, serverQueue) {
     }
   } else {
     serverQueue.songs.push(song);
-    return message.channel.send(`${song.title} был добавлен в очередь!`);
+    return message.channel.send(`**${song.title}** был добавлен в очередь!`);
   }
 }
 
@@ -165,16 +172,44 @@ async function playlist(message, serverQueue) {
   	  		title: element.title,
   	  		url: element.url,
   			};
-
 				queueContruct.songs.push(song);
-				play(message.guild, queueContruct.songs[0]);
 			})
 		}catch (err) {
       console.log(err);
       queue.delete(message.guild.id);
-      return message.channel.send(err);
+      return message.channel.send("Неверный url плейлиста");
     }
-	}
+    playMusic(message.guild, queueContruct.songs[0]);
+	} else {
+    const playlist = await ytpl(args[1]);
+		playlist.items.forEach((element) => {
+			const song = {
+  			title: element.title,
+  			url: element.url,
+  		};
+			serverQueue.songs.push(song);
+		})
+    message.channel.send("Весь плейлист добавлен в очередь!");
+  }
+}
+
+function tracklist(message, serverQueue) {
+  if (!message.member.voice.channel)
+    return message.channel.send(
+      "Вы должны быть в голосовом канале, чтобы просмотреть список треков!"
+    );
+  if (!serverQueue)
+    return message.channel.send("Треклист пуст!");
+  /* console.log(serverQueue); */
+  let titleMessage = '';
+  for (let i = 0; i < serverQueue.songs.length; i++){
+    if (i <= 15) titleMessage += `${i + 1}  -  ${serverQueue.songs[i].title}\n↓\n`;
+    else{
+      titleMessage += '\n↓\n...';
+      break
+    };
+  }
+  message.channel.send(titleMessage);
 }
 
 function pause(message, serverQueue) {
@@ -202,7 +237,7 @@ function resume(message, serverQueue) {
 		selfDeaf: false,
     selfMute: false
 	});
-  play(message.guild, serverQueue.songs[0]);
+  playMusic(message.guild, serverQueue.songs[0]);
 }
 
 function skip(message, serverQueue) {
@@ -213,7 +248,7 @@ function skip(message, serverQueue) {
   if (!serverQueue)
     return message.channel.send("Нет песни, которую я мог бы пропустить!");
   serverQueue.songs.shift();
-	play(message.guild, serverQueue.songs[0]);
+	playMusic(message.guild, serverQueue.songs[0]);
 }
 
 function stop(message, serverQueue) {
@@ -226,10 +261,10 @@ function stop(message, serverQueue) {
     return message.channel.send("Нет песни, которую я мог бы остановить!");
     
   serverQueue.songs = [];
-	play(message.guild, serverQueue.songs[0]);
+	playMusic(message.guild, serverQueue.songs[0]);
 }
 
-async function play(guild, song) {
+async function playMusic(guild, song) {
   const serverQueue = queue.get(guild.id);
   if (!song) {
     serverQueue.connection.disconnect();
@@ -237,8 +272,9 @@ async function play(guild, song) {
     return;
   }
 	
-	const stream = ytdl(song.url, { filter: "audioonly" });
-	const resource = createAudioResource(stream);
+	/* const streamMus = ytdl(song.url, { filter: "audioonly" }); */
+  const streamMus = await play.stream(song.url);
+	const resource = createAudioResource(streamMus.stream, { inputType: streamMus.type });
 	const player = createAudioPlayer({
 		behaviors: {
 			noSubscriber: NoSubscriberBehavior.Pause,
@@ -253,10 +289,10 @@ async function play(guild, song) {
 	player.on(AudioPlayerStatus.Idle, () => {
 		console.log(`song's finished`);
 		serverQueue.songs.shift();
-		play(guild, serverQueue.songs[0]);
+		playMusic(guild, serverQueue.songs[0]);
 		player.stop();
   });
-  /* const dispatcher = serverQueue.connection.play(stream).on("finish", () => {
+  /* const dispatcher = serverQueue.connection.playMusic(stream).on("finish", () => {
   }).on("error", error => console.error(error)); */
   /* dispatcher.setVolumeLogarithmic(serverQueue.volume / 5); */
   serverQueue.textChannel.send(`Start playing: **${song.title}**`);
